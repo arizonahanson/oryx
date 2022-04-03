@@ -36,3 +36,21 @@ func (env *Env) Get(symbol ast.Symbol) (val ast.Any, err error) {
 	}
 	return
 }
+
+// set a value to the environment
+func (env *Env) Set(symbol ast.Symbol, any ast.Any) (val ast.Any) {
+	val = any
+	switch future := any.(type) {
+	default:
+		break
+	case Future:
+		// memoize future resolution
+		val = Future(func() (res ast.Any, err error) {
+			res, err = future.Get()
+			env.Set(symbol, res)
+			return
+		})
+	}
+	env.data[symbol.Val] = val
+	return
+}
