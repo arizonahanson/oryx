@@ -54,7 +54,6 @@ func eval(any ast.Any, env *Env) (val ast.Any, err error) {
 		if err != nil {
 			return
 		}
-		// TODO: operators
 		switch fn := first.(type) {
 		case Func:
 			// eval to function-call future

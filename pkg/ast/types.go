@@ -226,25 +226,3 @@ func (val Expr) Equal(arg Any) bool {
 		return true
 	}
 }
-
-// type:operator
-type Operator struct {
-	Val string
-}
-
-func (val Operator) String() string {
-	return val.GoString()
-}
-
-func (val Operator) GoString() string {
-	return val.Val
-}
-
-func (val Operator) Equal(arg Any) bool {
-	switch op := arg.(type) {
-	default:
-		return false
-	case Operator:
-		return val.Val == op.Val
-	}
-}

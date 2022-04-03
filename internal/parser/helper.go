@@ -25,6 +25,25 @@ func join(first, rest interface{}, index int) []ast.Any {
 	return result
 }
 
+func swap(first, rest interface{}, opIndex int, rightIndex int) ast.Any {
+	if rest == nil {
+		return first.(ast.Any)
+	}
+	more := slice(rest)
+	result := make([]ast.Any, len(more)+2)
+	for i, group := range more {
+		frag := slice(group)
+		rhs := frag[rightIndex]
+		if i == 0 {
+			op := frag[opIndex]
+			result[0] = op.(ast.Symbol)
+			result[1] = first.(ast.Any)
+		}
+		result[i+2] = rhs.(ast.Any)
+	}
+	return ast.Expr(result)
+}
+
 func merge(first, rest interface{}, keyIndex int, valueIndex int) map[ast.String]ast.Any {
 	pair := slice(first)
 	if pair == nil {

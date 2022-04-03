@@ -19,16 +19,19 @@ func (future Future) Equal(any ast.Any) bool {
 }
 
 // type:function
-type Func func(exp ast.Expr, env *Env) (ast.Any, error)
+type Func struct {
+	Fn   FuncType
+	Name string
+}
+
+type FuncType func(exp ast.Expr, env *Env) (ast.Any, error)
 
 func (fn Func) String() string {
-	// TODO
-	return "func"
+	return fn.GoString()
 }
 
 func (fn Func) GoString() string {
-	// TODO
-	return "func"
+	return fn.Name
 }
 
 func (fn Func) Equal(any ast.Any) bool {

@@ -12,6 +12,10 @@ type Env struct {
 	data   map[string]ast.Any
 }
 
+func NewEnv(outer *Env) *Env {
+	return &Env{outer, make(map[string]ast.Any)}
+}
+
 // find an environment and value using a symbol
 func (env *Env) find(symbol ast.Symbol) (*Env, ast.Any) {
 	scope := env
@@ -53,4 +57,9 @@ func (env *Env) Set(symbol ast.Symbol, any ast.Any) (val ast.Any) {
 	}
 	env.data[symbol.Val] = val
 	return
+}
+
+// helper to set a base function
+func (env *Env) SetFunc(name string, fn FuncType) (val ast.Any) {
+	return env.Set(ast.Symbol{Val: name, Pos: nil}, Func{Fn: fn, Name: name})
 }

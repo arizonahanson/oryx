@@ -4,26 +4,67 @@ package parser
 import "github.com/arizonahanson/oryx/pkg/ast"
 }
 
-AST ←  seq:Seq EOF {
+AST ←  seq:(Seq / Infix) EOF {
   return ast.Expr(seq.([]ast.Any)), nil
 }
 
-// expression sequence without delimiters
+// all types
+Any ←  Null / Boolean / Number / String / Array / Map / Symbol / Expr
+
+// sequence without delimiters
 Seq ←  _* first:Any? rest:(_+ Any)* _* {
   return join(first, rest, 1), nil
 }
 
-// all types
-Any ←  Atom / Array / Map / Symbol / Expr
-
-// base types
-Atom ←  Null / Boolean / Number / String
-
 // s-expression
-Expr ←  '(' seq:Seq ')' {
+Expr ←  '(' seq:(Seq / Infix) ')' {
   return ast.Expr(seq.([]ast.Any)), nil
-} / '(' Seq !')' {
+} / '(' (Seq / Infix) !')' {
   return ast.Null{}, errors.New("not terminated")
+}
+// infix order of operations
+Infix ←  OrExpr
+// or
+OrOp ←  "||" {
+  return ast.Symbol{Val:string(c.text), Pos:pos(c.pos)}, nil
+}
+OrExpr ←  _* first:AndExpr rest:(_+ OrOp _+ AndExpr)* _* {
+  return swap(first, rest, 1, 3), nil
+}
+// and
+AndOp ←  "&&" {
+  return ast.Symbol{Val:string(c.text), Pos:pos(c.pos)}, nil
+}
+AndExpr ←  _* first:EqlExpr rest:(_+ AndOp _+ EqlExpr)* _* {
+  return swap(first, rest, 1, 3), nil
+}
+// equal / not-equal
+EqlOp ←  ("==" / "!=") {
+  return ast.Symbol{Val:string(c.text), Pos:pos(c.pos)}, nil
+}
+EqlExpr ←  _* first:CmpExpr rest:(_+ EqlOp _+ CmpExpr)? _* {
+  return swap(first, rest, 1, 3), nil
+}
+// comparisons
+CmpOp ←  ("<" / "<=" / ">" / ">=") {
+  return ast.Symbol{Val:string(c.text), Pos:pos(c.pos)}, nil
+}
+CmpExpr ←  _* first:AddExpr rest:(_+ CmpOp _+ AddExpr)? _* {
+  return swap(first, rest, 1, 3), nil
+}
+// add / subtract
+AddOp ←  ("+" / "-") {
+  return ast.Symbol{Val:string(c.text), Pos:pos(c.pos)}, nil
+}
+AddExpr ←  _* first:MulExpr rest:(_+ AddOp _+ MulExpr)* _* {
+  return swap(first, rest, 1, 3), nil
+}
+// multiply / divide / modulo
+MulOp ←  ("*" / "/" / "%") {
+  return ast.Symbol{Val:string(c.text), Pos:pos(c.pos)}, nil
+}
+MulExpr ←  _* first:Any rest:(_+ MulOp _+ Any)* _* {
+  return swap(first, rest, 1, 3), nil
 }
 
 // array
