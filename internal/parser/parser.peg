@@ -1,9 +1,96 @@
 {
 package parser
 
-import "github.com/arizonahanson/oryx/pkg/core"
+import "github.com/arizonahanson/oryx/pkg/ast"
 }
 
-// root of AST
-AST ←  .EOF
+AST ←  seq:Seq EOF {
+  return ast.Expr(seq.([]ast.Any)), nil
+}
+
+// expression sequence without delimiters
+Seq ←  _* first:Any? rest:(_+ Any)* _* {
+  return join(first, rest, 1), nil
+}
+
+// all types
+Any ←  Atom / Array / Map / Symbol / Expr
+
+// base types
+Atom ←  Null / Boolean / Number / String
+
+// s-expression
+Expr ←  '(' seq:Seq ')' {
+  return ast.Expr(seq.([]ast.Any)), nil
+} / '(' Seq !')' {
+  return ast.Null{}, errors.New("not terminated")
+}
+
+// array
+Array ←  '[' seq:Seq ']' {
+  return ast.Array(seq.([]ast.Any)), nil
+} / '[' Seq !']' {
+  return ast.Null{}, errors.New("not terminated")
+}
+
+// map
+Map ←  '{' _* first:(String _* ':' _* Any)? rest:(_+ String _* ':' _* Any)* _* '}' {
+  return ast.Map(merge(first, rest, 0, 4)), nil
+} / '{' _* (String _* ':' _* Any) (_+ String _* ':' _* Any)* _* !'}' {
+  return ast.Null{}, errors.New("not terminated")
+}
+
+// null
+Null ←  "null" {
+  return ast.Null{}, nil
+}
+
+// boolean
+Boolean ←  "true" {
+  return ast.Boolean(true), nil
+} / "false" {
+  return ast.Boolean(false), nil
+}
+
+// real number (eg. -123.45e-67)
+Number ←  '-'? digit+ ('.' digit+)? ('e'i ('+' / '-')? digit+)? {
+	return ast.NewNumberFromString(string(c.text))
+}
+
+// quoted string
+String ←  '"' runeChr* '"' {
+  return ast.NewStringFromString(string(c.text))
+} / '"' runeChr* !'"' {
+	return ast.Null{}, errors.New("not terminated")
+}
+// no naked " or \ inside a String, supports \\, \/, \", \abfnrtv, \xff, \uffff, \Uffffffff
+runeChr ←  [^"\\] / runeEsc
+runeEsc ←  `\` (["\\/abfnrtv] /
+           ('x' hexDigit hexDigit) /
+           ('u' hexDigit hexDigit hexDigit hexDigit) /
+           ('U' hexDigit hexDigit hexDigit hexDigit hexDigit hexDigit hexDigit hexDigit))
+hexDigit ← [0-9a-f]i
+
+// symbol
+Symbol ←  !(Null / Bool) word suffix? {
+  return ast.Symbol{Val: string(c.text), Pos: pos(c.pos)}, nil
+}
+
+// symbol component
+word ←  letter (letter / digit)*
+// unicode "letters" for symbols
+letter ←  [\p{L}] / '_'
+// numerals
+digit ←  [0-9]
+
+// UTF-8: whitespace and control chars/unused codes
+_ "whitespace" ←  [\p{Z}] / [\p{C}] / ',' / Comment
+// comments
+Comment ←  SingleLineComment / MultiLineComment
+SingleLineComment ← "//" (!EOL .)* EOL
+MultiLineComment ←  "/*" (!"*/" .)* "*/"
+
+// end of line
+EOL ←  '\n' / EOF
+// End of file
 EOF ←  !.
