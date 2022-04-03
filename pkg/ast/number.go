@@ -13,6 +13,12 @@ func NewNumber(num int64) Number {
 	return Number(decimal.NewFromInt(num))
 }
 
+// parse number
+func NewNumberFromString(num string) (Number, error) {
+	dec, err := decimal.NewFromString(num)
+	return Number(dec), err
+}
+
 // number to decimal impl
 func (val Number) Decimal() decimal.Decimal {
 	return decimal.Decimal(val)

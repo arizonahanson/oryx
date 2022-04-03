@@ -1,12 +1,10 @@
 package eval
 
 import (
-	"fmt"
-
 	"github.com/arizonahanson/oryx/pkg/ast"
 )
 
-// trampoline to resolve future values
+// trampoline to resolve futures
 func (future Future) Get() (val ast.Any, err error) {
 	val, err = future()
 	for {
@@ -22,31 +20,20 @@ func (future Future) Get() (val ast.Any, err error) {
 	}
 }
 
-// resolve future asynchronously and return new future
+// resolve futures asynchronously and return new future
 func (future Future) Go() (await Future) {
-	tunnel := make(chan Future, 1)
+	channel := make(chan Future, 1)
 	// resolve
 	async := func() {
 		val, err := future.Get()
-		tunnel <- func() (ast.Any, error) {
+		channel <- func() (ast.Any, error) {
 			return val, err
 		}
 	}
 	// await future
 	await = func() (ast.Any, error) {
-		return <-tunnel, nil
+		return <-channel, nil
 	}
 	go async()
 	return
-}
-
-// trace errors mapped to source
-func (future Future) Trace(exp ast.Expr) Future {
-	return func() (val ast.Any, err error) {
-		val, err = future.Get()
-		if err != nil {
-			err = fmt.Errorf("%#v: %s", exp[0], err)
-		}
-		return
-	}
 }
