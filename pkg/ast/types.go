@@ -9,8 +9,11 @@ import (
 
 // type:any
 type Any interface {
+	// used by printf %s %v
 	String() string
+	// used by printf %#v
 	GoString() string
+	// deep equality
 	Equal(arg Any) bool
 }
 
@@ -46,11 +49,11 @@ func (val Boolean) GoString() string {
 }
 
 func (val Boolean) Equal(arg Any) bool {
-	switch arg.(type) {
+	switch b := arg.(type) {
 	default:
 		return false
 	case Boolean:
-		return val == arg
+		return val == b
 	}
 }
 
@@ -88,11 +91,11 @@ func (val String) GoString() string {
 }
 
 func (val String) Equal(arg Any) bool {
-	switch arg.(type) {
+	switch str := arg.(type) {
 	default:
 		return false
 	case String:
-		return val == arg
+		return val.Val == str.Val
 	}
 }
 
@@ -120,8 +123,7 @@ func (val Array) Equal(arg Any) bool {
 			return false
 		}
 		for i, item := range val {
-			item2 := val2[i]
-			if !item.Equal(item2) {
+			if item2 := val2[i]; !item.Equal(item2) {
 				return false
 			}
 		}
@@ -155,8 +157,7 @@ func (val Map) Equal(arg Any) bool {
 			return false
 		}
 		for key, item := range val {
-			item2, ok := val2[key]
-			if !ok || !item.Equal(item2) {
+			if item2, exists := val2[key]; !exists || !item.Equal(item2) {
 				return false
 			}
 		}
@@ -190,7 +191,7 @@ func (val Symbol) Equal(arg Any) bool {
 	default:
 		return false
 	case Symbol:
-		return val == sym
+		return val.Val == sym.Val
 	}
 }
 
@@ -218,8 +219,7 @@ func (val Expr) Equal(arg Any) bool {
 			return false
 		}
 		for i, item := range val {
-			item2 := val2[i]
-			if !item.Equal(item2) {
+			if item2 := val2[i]; !item.Equal(item2) {
 				return false
 			}
 		}

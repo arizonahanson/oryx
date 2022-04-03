@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// parse quoted, escaped string
+// parse quoted string with escape-sequences
 func NewStringFromString(val string) (String, error) {
 	str := strings.Replace(val, "\\/", "/", -1)
 	str, err := strconv.Unquote(str)
