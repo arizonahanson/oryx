@@ -1,0 +1,9 @@
+{
+package parser
+
+import "github.com/arizonahanson/oryx/pkg/core"
+}
+
+// root of AST
+AST ←  .EOF
+EOF ←  !.
