@@ -26,45 +26,54 @@ Expr ←  '(' seq:(Seq / Infix) ')' {
 Infix ←  OrExpr
 // or
 OrOp ←  "||" {
-  return ast.Symbol{Val:string(c.text), Pos:pos(c.pos)}, nil
+  return symbol(c)
 }
-OrExpr ←  _* first:AndExpr rest:(_+ OrOp _+ AndExpr)* _* {
+OrExpr ←  first:AndExpr rest:(_+ OrOp _+ AndExpr)* {
   return swap(first, rest, 1, 3), nil
 }
 // and
 AndOp ←  "&&" {
-  return ast.Symbol{Val:string(c.text), Pos:pos(c.pos)}, nil
+  return symbol(c)
 }
-AndExpr ←  _* first:EqlExpr rest:(_+ AndOp _+ EqlExpr)* _* {
+AndExpr ←  first:EqlExpr rest:(_+ AndOp _+ EqlExpr)* {
   return swap(first, rest, 1, 3), nil
 }
 // equal / not-equal
 EqlOp ←  ("==" / "!=") {
-  return ast.Symbol{Val:string(c.text), Pos:pos(c.pos)}, nil
+  return symbol(c)
 }
-EqlExpr ←  _* first:CmpExpr rest:(_+ EqlOp _+ CmpExpr)? _* {
+EqlExpr ←  first:CmpExpr rest:(_+ EqlOp _+ CmpExpr)? {
   return swap(first, rest, 1, 3), nil
 }
 // comparisons
 CmpOp ←  ("<" / "<=" / ">" / ">=") {
-  return ast.Symbol{Val:string(c.text), Pos:pos(c.pos)}, nil
+  return symbol(c)
 }
-CmpExpr ←  _* first:AddExpr rest:(_+ CmpOp _+ AddExpr)? _* {
+CmpExpr ←  first:AddExpr rest:(_+ CmpOp _+ AddExpr)? {
   return swap(first, rest, 1, 3), nil
 }
 // add / subtract
 AddOp ←  ("+" / "-") {
-  return ast.Symbol{Val:string(c.text), Pos:pos(c.pos)}, nil
+  return symbol(c)
 }
-AddExpr ←  _* first:MulExpr rest:(_+ AddOp _+ MulExpr)* _* {
+AddExpr ←  first:MulExpr rest:(_+ AddOp _+ MulExpr)* {
   return swap(first, rest, 1, 3), nil
 }
-// multiply / divide / modulo
-MulOp ←  ("*" / "/" / "%") {
-  return ast.Symbol{Val:string(c.text), Pos:pos(c.pos)}, nil
+// multiply / divide
+MulOp ←  ("*" / "/") {
+  return symbol(c)
 }
-MulExpr ←  _* first:Any rest:(_+ MulOp _+ Any)* _* {
+MulExpr ←  first:UnExpr rest:(_+ MulOp _+ UnExpr)* {
   return swap(first, rest, 1, 3), nil
+}
+// unary
+UnOp ←  "!" {
+  return symbol(c)
+}
+UnExpr ←  _* op:UnOp _* arg:Any _* {
+	return ast.Expr{op.(ast.Symbol), arg.(ast.Any)}, nil
+} / _* arg:Any _* {
+  return arg, nil
 }
 
 // array
@@ -114,7 +123,7 @@ hexDigit ← [0-9a-f]i
 
 // symbol
 Symbol ←  !(Null / Bool) word suffix? {
-  return ast.Symbol{Val: string(c.text), Pos: pos(c.pos)}, nil
+  return symbol(c)
 }
 
 // symbol component

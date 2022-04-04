@@ -65,6 +65,10 @@ func merge(first, rest interface{}, keyIndex int, valueIndex int) map[ast.String
 	return result
 }
 
+func symbol(c *current) (ast.Symbol, error) {
+	return ast.Symbol{Val: string(c.text), Pos: pos(c.pos)}, nil
+}
+
 func pos(p position) *ast.Position {
 	return &ast.Position{Row: int64(p.line), Column: int64(p.col), Offset: int64(p.offset)}
 }

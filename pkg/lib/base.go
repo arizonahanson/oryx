@@ -23,13 +23,16 @@ var BaseLib = map[string]eval.FuncType{
 	"gt?":    _gtQ,
 	">=":     _gteqQ,
 	"gteq?":  _gteqQ,
-	/*
-		+
-		-
-		*
-		/
-		%
-	*/
+	"+":      _add,
+	"add":    _add,
+	"-":      _sub,
+	"sub":    _sub,
+	"*":      _mul,
+	"mul":    _mul,
+	"/":      _divS,
+	"div*":   _divS,
+	"div":    _div,
+	"rem":    _rem,
 }
 
 func BaseEnv(outer *eval.Env) *eval.Env {
@@ -65,6 +68,102 @@ func evalNumber(exp ast.Any, env *eval.Env) (*ast.Number, error) {
 	case ast.Number:
 		return &num, nil
 	}
+}
+
+func _add(exp ast.Expr, env *eval.Env) (ast.Any, error) {
+	res := ast.Zero.Decimal()
+	for _, item := range exp[1:] {
+		val, err := evalNumber(item, env)
+		if err != nil {
+			return ast.Null{}, err
+		}
+		res = res.Add(val.Decimal())
+	}
+	return ast.Number(res), nil
+}
+
+func _sub(exp ast.Expr, env *eval.Env) (ast.Any, error) {
+	res := ast.Zero.Decimal()
+	for i, item := range exp[1:] {
+		val, err := evalNumber(item, env)
+		if err != nil {
+			return ast.Null{}, err
+		}
+		if i == 0 && len(exp) > 2 {
+			res = val.Decimal()
+		} else {
+			res = res.Sub(val.Decimal())
+		}
+	}
+	return ast.Number(res), nil
+}
+
+func _mul(exp ast.Expr, env *eval.Env) (ast.Any, error) {
+	res := ast.One.Decimal()
+	for _, item := range exp[1:] {
+		val, err := evalNumber(item, env)
+		if err != nil {
+			return ast.Null{}, err
+		}
+		res = res.Mul(val.Decimal())
+	}
+	return ast.Number(res), nil
+}
+
+func _div(exp ast.Expr, env *eval.Env) (ast.Any, error) {
+	if err := exactLen(exp, 4); err != nil {
+		return ast.Null{}, err
+	}
+	val1, err := evalNumber(exp[1], env)
+	if err != nil {
+		return ast.Null{}, err
+	}
+	val2, err := evalNumber(exp[2], env)
+	if err != nil {
+		return ast.Null{}, err
+	}
+	val3, err := evalNumber(exp[3], env)
+	if err != nil {
+		return ast.Null{}, err
+	}
+	q, _ := val1.Decimal().QuoRem(val2.Decimal(), int32(val3.Decimal().IntPart()))
+	return ast.Number(q), nil
+}
+
+func _rem(exp ast.Expr, env *eval.Env) (ast.Any, error) {
+	if err := exactLen(exp, 4); err != nil {
+		return ast.Null{}, err
+	}
+	val1, err := evalNumber(exp[1], env)
+	if err != nil {
+		return ast.Null{}, err
+	}
+	val2, err := evalNumber(exp[2], env)
+	if err != nil {
+		return ast.Null{}, err
+	}
+	val3, err := evalNumber(exp[3], env)
+	if err != nil {
+		return ast.Null{}, err
+	}
+	_, r := val1.Decimal().QuoRem(val2.Decimal(), int32(val3.Decimal().IntPart()))
+	return ast.Number(r), nil
+}
+
+func _divS(exp ast.Expr, env *eval.Env) (ast.Any, error) {
+	res := ast.One.Decimal()
+	for i, item := range exp[1:] {
+		val, err := evalNumber(item, env)
+		if err != nil {
+			return ast.Null{}, err
+		}
+		if i == 0 && len(exp) > 2 {
+			res = val.Decimal()
+		} else {
+			res = res.Div(val.Decimal())
+		}
+	}
+	return ast.Number(res), nil
 }
 
 func _ltQ(exp ast.Expr, env *eval.Env) (ast.Any, error) {
