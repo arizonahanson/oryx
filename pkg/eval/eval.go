@@ -2,13 +2,29 @@ package eval
 
 import "github.com/arizonahanson/oryx/pkg/ast"
 
+func EvalBytes(bytes []byte, env *Env) (ast.Any, error) {
+	arg, err := Parse(bytes)
+	if err != nil {
+		return ast.Null{}, err
+	}
+	return Eval(arg, env)
+}
+
+func EvalFile(filename string, env *Env) (ast.Any, error) {
+	arg, err := ParseFile(filename)
+	if err != nil {
+		return ast.Null{}, err
+	}
+	return Eval(arg, env)
+}
+
 // eager evaluation
 func Eval(any ast.Any, env *Env) (ast.Any, error) {
-	return EvalFuture(any, env).Get()
+	return FutureEval(any, env).Get()
 }
 
 // lazy evaluation
-func EvalFuture(any ast.Any, env *Env) Future {
+func FutureEval(any ast.Any, env *Env) Future {
 	return func() (val ast.Any, err error) {
 		return eval(any, env)
 	}

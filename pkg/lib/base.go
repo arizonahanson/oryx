@@ -274,7 +274,7 @@ func _and(exp ast.Expr, env *eval.Env) (ast.Any, error) {
 			return val, nil
 		}
 	}
-	return eval.EvalFuture(exp[len(exp)-1], env), nil
+	return eval.FutureEval(exp[len(exp)-1], env), nil
 }
 
 func _or(exp ast.Expr, env *eval.Env) (ast.Any, error) {
@@ -290,5 +290,5 @@ func _or(exp ast.Expr, env *eval.Env) (ast.Any, error) {
 			return val, nil
 		}
 	}
-	return eval.EvalFuture(exp[len(exp)-1], env), nil
+	return eval.FutureEval(exp[len(exp)-1], env), nil
 }
