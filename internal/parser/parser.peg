@@ -45,14 +45,14 @@ EqlOp ←  ("==" / "!=") {
   return symbol(c)
 }
 EqlExpr ←  first:CmpExpr rest:(_+ EqlOp _+ CmpExpr)? {
-  return swap(first, rest, 1, 3), nil
+  return swap(first, []interface{}{rest}, 1, 3), nil
 }
 // comparisons
-CmpOp ←  ("<" / "<=" / ">" / ">=") {
+CmpOp ←  ("<=" / "<" / ">=" / ">") {
   return symbol(c)
 }
 CmpExpr ←  first:AddExpr rest:(_+ CmpOp _+ AddExpr)? {
-  return swap(first, rest, 1, 3), nil
+  return swap(first, []interface{}{rest}, 1, 3), nil
 }
 // add / subtract
 AddOp ←  ("+" / "-") {

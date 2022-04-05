@@ -28,30 +28,41 @@ func join(first, rest interface{}, index int) []ast.Any {
 }
 
 func swap(first, rest interface{}, opIndex int, rightIndex int) []ast.Any {
+	// return left if no right
 	more := slice(rest)
-	if len(more) == 0 {
-		return first.([]ast.Any)
+	left := first.([]ast.Any)
+	if len(more) == 0 || more[0] == nil {
+		return left
 	}
+	// iterate right side
 	result := make([]ast.Any, len(more)+2)
-	for i, group := range more {
+	i := 0
+	for _, group := range more {
 		frag := slice(group)
-		rhs := frag[rightIndex]
+		op := frag[opIndex].(ast.Symbol)
+		right := frag[rightIndex].([]ast.Any)
 		if i == 0 {
-			op := frag[opIndex]
-			result[0] = op.(ast.Symbol)
-			arg1 := first.([]ast.Any)
-			if len(arg1) > 1 {
-				result[1] = ast.Expr(arg1)
+			result[0] = op
+			if len(left) > 1 {
+				result[1] = ast.Expr(left)
 			} else {
-				result[1] = arg1[0]
+				result[1] = left[0]
 			}
 		}
-		arg2 := rhs.([]ast.Any)
-		if len(arg2) > 1 {
-			result[i+2] = ast.Expr(arg2)
-		} else {
-			result[i+2] = arg2[0]
+		if !op.Equal(result[0]) {
+			// new op
+			newexpr := make([]ast.Any, len(result)-i)
+			newexpr[0] = op
+			newexpr[1] = ast.Expr(result[:i+2])
+			result = newexpr
+			i = 0
 		}
+		if len(right) > 1 {
+			result[i+2] = ast.Expr(right)
+		} else {
+			result[i+2] = right[0]
+		}
+		i++
 	}
 	return result
 }

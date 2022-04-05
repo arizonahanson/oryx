@@ -1,6 +1,8 @@
 package eval
 
-import "github.com/arizonahanson/oryx/pkg/ast"
+import (
+	"github.com/arizonahanson/oryx/pkg/ast"
+)
 
 func EvalBytes(bytes []byte, env *Env) (ast.Any, error) {
 	arg, err := Parse(bytes)
