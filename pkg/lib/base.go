@@ -33,6 +33,8 @@ var BaseLib = map[string]eval.FuncType{
 	"div*":   _divS,
 	"div":    _div,
 	"rem":    _rem,
+	"!":      _not,
+	"not":    _not,
 }
 
 func BaseEnv(outer *eval.Env) *eval.Env {
@@ -68,6 +70,17 @@ func evalNumber(exp ast.Any, env *eval.Env) (*ast.Number, error) {
 	case ast.Number:
 		return &num, nil
 	}
+}
+
+func oneArg(exp ast.Expr, env *eval.Env) (ast.Any, error) {
+	if err := exactLen(exp, 2); err != nil {
+		return ast.Null{}, err
+	}
+	val, err := eval.Eval(exp[1], env)
+	if err != nil {
+		return ast.Null{}, err
+	}
+	return val, nil
 }
 
 func _add(exp ast.Expr, env *eval.Env) (ast.Any, error) {
@@ -291,4 +304,12 @@ func _or(exp ast.Expr, env *eval.Env) (ast.Any, error) {
 		}
 	}
 	return eval.FutureEval(exp[len(exp)-1], env), nil
+}
+
+func _not(exp ast.Expr, env *eval.Env) (ast.Any, error) {
+	val, err := oneArg(exp, env)
+	if err != nil {
+		return ast.Null{}, err
+	}
+	return ast.Boolean(val == ast.Boolean(false) || val == ast.Null{}), nil
 }

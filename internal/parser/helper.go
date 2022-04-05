@@ -1,6 +1,8 @@
 package parser
 
-import "github.com/arizonahanson/oryx/pkg/ast"
+import (
+	"github.com/arizonahanson/oryx/pkg/ast"
+)
 
 // cast to []interface{}
 func slice(v interface{}) []interface{} {
@@ -25,11 +27,11 @@ func join(first, rest interface{}, index int) []ast.Any {
 	return result
 }
 
-func swap(first, rest interface{}, opIndex int, rightIndex int) ast.Any {
-	if rest == nil {
-		return first.(ast.Any)
-	}
+func swap(first, rest interface{}, opIndex int, rightIndex int) []ast.Any {
 	more := slice(rest)
+	if len(more) == 0 {
+		return first.([]ast.Any)
+	}
 	result := make([]ast.Any, len(more)+2)
 	for i, group := range more {
 		frag := slice(group)
@@ -37,11 +39,21 @@ func swap(first, rest interface{}, opIndex int, rightIndex int) ast.Any {
 		if i == 0 {
 			op := frag[opIndex]
 			result[0] = op.(ast.Symbol)
-			result[1] = first.(ast.Any)
+			arg1 := first.([]ast.Any)
+			if len(arg1) > 1 {
+				result[1] = ast.Expr(arg1)
+			} else {
+				result[1] = arg1[0]
+			}
 		}
-		result[i+2] = rhs.(ast.Any)
+		arg2 := rhs.([]ast.Any)
+		if len(arg2) > 1 {
+			result[i+2] = ast.Expr(arg2)
+		} else {
+			result[i+2] = arg2[0]
+		}
 	}
-	return ast.Expr(result)
+	return result
 }
 
 func merge(first, rest interface{}, keyIndex int, valueIndex int) map[ast.String]ast.Any {

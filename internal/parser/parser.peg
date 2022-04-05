@@ -4,7 +4,7 @@ package parser
 import "github.com/arizonahanson/oryx/pkg/ast"
 }
 
-AST ←  seq:(Seq / Infix) EOF {
+AST ←  seq:Seq EOF {
   return ast.Expr(seq.([]ast.Any)), nil
 }
 
@@ -12,14 +12,16 @@ AST ←  seq:(Seq / Infix) EOF {
 Any ←  Null / Boolean / Number / String / Array / Map / Symbol / Expr
 
 // sequence without delimiters
-Seq ←  _* first:Any? rest:(_+ Any)* _* {
+Seq ←  _* first:Any rest:(_+ Any)+ _* {
   return join(first, rest, 1), nil
+} / _* infix:Infix _* {
+  return infix, nil
 }
 
 // s-expression
-Expr ←  '(' seq:(Seq / Infix) ')' {
+Expr ←  '(' seq:Seq ')' {
   return ast.Expr(seq.([]ast.Any)), nil
-} / '(' (Seq / Infix) !')' {
+} / '(' Seq !')' {
   return ast.Null{}, errors.New("not terminated")
 }
 // infix order of operations
@@ -70,10 +72,17 @@ MulExpr ←  first:UnExpr rest:(_+ MulOp _+ UnExpr)* {
 UnOp ←  "!" {
   return symbol(c)
 }
-UnExpr ←  _* op:UnOp _* arg:Any _* {
-	return ast.Expr{op.(ast.Symbol), arg.(ast.Any)}, nil
-} / _* arg:Any _* {
-  return arg, nil
+UnExpr ←  op:UnOp? _* any:Any? {
+  if op == nil && any == nil {
+    return []ast.Any{}, nil
+  }
+  if op == nil {
+    return []ast.Any{any.(ast.Any)}, nil
+  }
+  if any == nil {
+    return []ast.Any{op.(ast.Symbol)}, nil
+  }
+	return []ast.Any{op.(ast.Symbol), any.(ast.Any)}, nil
 }
 
 // array
@@ -122,7 +131,7 @@ runeEsc ←  `\` (["\\/abfnrtv] /
 hexDigit ← [0-9a-f]i
 
 // symbol
-Symbol ←  !(Null / Bool) word suffix? {
+Symbol ←  !(Null / Boolean) word ("!" / "*" / "?")? {
   return symbol(c)
 }
 
