@@ -30,42 +30,42 @@ Infix ←  OrExpr
 OrOp ←  "||" {
   return symbol(c)
 }
-OrExpr ←  first:AndExpr rest:(_+ OrOp _+ AndExpr)* {
+OrExpr ←  first:AndExpr rest:(_* OrOp _* AndExpr)* {
   return swap(first, rest, 1, 3), nil
 }
 // and
 AndOp ←  "&&" {
   return symbol(c)
 }
-AndExpr ←  first:EqlExpr rest:(_+ AndOp _+ EqlExpr)* {
+AndExpr ←  first:EqlExpr rest:(_* AndOp _* EqlExpr)* {
   return swap(first, rest, 1, 3), nil
 }
 // equal / not-equal
 EqlOp ←  ("==" / "!=") {
   return symbol(c)
 }
-EqlExpr ←  first:CmpExpr rest:(_+ EqlOp _+ CmpExpr)? {
+EqlExpr ←  first:CmpExpr rest:(_* EqlOp _* CmpExpr)? {
   return swap(first, []interface{}{rest}, 1, 3), nil
 }
 // comparisons
 CmpOp ←  ("<=" / "<" / ">=" / ">") {
   return symbol(c)
 }
-CmpExpr ←  first:AddExpr rest:(_+ CmpOp _+ AddExpr)? {
+CmpExpr ←  first:AddExpr rest:(_* CmpOp _* AddExpr)? {
   return swap(first, []interface{}{rest}, 1, 3), nil
 }
 // add / subtract
 AddOp ←  ("+" / "-") {
   return symbol(c)
 }
-AddExpr ←  first:MulExpr rest:(_+ AddOp _+ MulExpr)* {
+AddExpr ←  first:MulExpr rest:(_* AddOp _* MulExpr)* {
   return swap(first, rest, 1, 3), nil
 }
 // multiply / divide
 MulOp ←  ("*" / "/") {
   return symbol(c)
 }
-MulExpr ←  first:UnExpr rest:(_+ MulOp _+ UnExpr)* {
+MulExpr ←  first:UnExpr rest:(_* MulOp _* UnExpr)* {
   return swap(first, rest, 1, 3), nil
 }
 // unary
@@ -73,16 +73,14 @@ UnOp ←  "!" {
   return symbol(c)
 }
 UnExpr ←  op:UnOp? _* any:Any? {
-  if op == nil && any == nil {
-    return []ast.Any{}, nil
+  res := []ast.Any{}
+  if op != nil {
+    res = append(res, op.(ast.Symbol))
   }
-  if op == nil {
-    return []ast.Any{any.(ast.Any)}, nil
+  if any != nil {
+    res = append(res, any.(ast.Any))
   }
-  if any == nil {
-    return []ast.Any{op.(ast.Symbol)}, nil
-  }
-	return []ast.Any{op.(ast.Symbol), any.(ast.Any)}, nil
+	return res, nil
 }
 
 // array
@@ -131,7 +129,7 @@ runeEsc ←  `\` (["\\/abfnrtv] /
 hexDigit ← [0-9a-f]i
 
 // symbol
-Symbol ←  !(Null / Boolean) word ("!" / "*" / "?")? {
+Symbol ←  !(Null / Boolean) word ("!" / "?")? {
   return symbol(c)
 }
 

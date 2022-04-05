@@ -29,9 +29,9 @@ var BaseLib = map[string]eval.FuncType{
 	"sub":    _sub,
 	"*":      _mul,
 	"mul":    _mul,
-	"/":      _divS,
-	"div*":   _divS,
+	"/":      _div,
 	"div":    _div,
+	"quo":    _quo,
 	"rem":    _rem,
 	"!":      _not,
 	"not":    _not,
@@ -123,7 +123,7 @@ func _mul(exp ast.Expr, env *eval.Env) (ast.Any, error) {
 	return ast.Number(res), nil
 }
 
-func _div(exp ast.Expr, env *eval.Env) (ast.Any, error) {
+func _quo(exp ast.Expr, env *eval.Env) (ast.Any, error) {
 	if err := exactLen(exp, 4); err != nil {
 		return ast.Null{}, err
 	}
@@ -163,7 +163,7 @@ func _rem(exp ast.Expr, env *eval.Env) (ast.Any, error) {
 	return ast.Number(r), nil
 }
 
-func _divS(exp ast.Expr, env *eval.Env) (ast.Any, error) {
+func _div(exp ast.Expr, env *eval.Env) (ast.Any, error) {
 	res := ast.One.Decimal()
 	for i, item := range exp[1:] {
 		val, err := evalNumber(item, env)
