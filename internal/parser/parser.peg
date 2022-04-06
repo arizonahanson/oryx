@@ -70,10 +70,16 @@ SExpr ←  '(' expr:Expr ')' {
 // postfix and infix expressions
 Expr ←  _* first:Any rest:(_+ Any)+ _* {
   return ast.Expr(join(first, rest, 1)), nil
-} / _* infix:OrExpr _* {
+} / _* infix:AsExpr _* {
   return ast.Expr(infix.([]ast.Any)), nil
 }
 // or
+AsOp ←  ":=" {
+  return symbol(c)
+}
+AsExpr ←  left:OrExpr right:(_* AsOp _* OrExpr)? {
+  return swap(left, []interface{}{right}, 1, 3), nil
+}
 OrOp ←  "||" {
   return symbol(c)
 }

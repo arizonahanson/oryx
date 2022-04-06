@@ -35,6 +35,8 @@ var BaseLib = map[string]eval.FuncType{
 	"rem":    _rem,
 	"!":      _not,
 	"not":    _not,
+	":=":     _defE,
+	"def!":   _defE,
 }
 
 func BaseEnv(outer *eval.Env) *eval.Env {
@@ -81,6 +83,19 @@ func oneArg(exp ast.Expr, env *eval.Env) (ast.Any, error) {
 		return ast.Null{}, err
 	}
 	return val, nil
+}
+
+func _defE(exp ast.Expr, env *eval.Env) (ast.Any, error) {
+	if err := exactLen(exp, 3); err != nil {
+		return ast.Null{}, err
+	}
+	switch sym := exp[1].(type) {
+	default:
+		return ast.Null{}, fmt.Errorf("called with non-symbol %#v", exp[1])
+	case ast.Symbol:
+		env.Set(sym, eval.FutureEval(exp[2], env))
+		return ast.Null{}, nil
+	}
 }
 
 func _add(exp ast.Expr, env *eval.Env) (ast.Any, error) {
