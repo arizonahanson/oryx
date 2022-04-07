@@ -37,6 +37,8 @@ var BaseLib = map[string]eval.FuncType{
 	"not":    _not,
 	":=":     _defE,
 	"def!":   _defE,
+	"func":   _func,
+	"=>":     _func,
 }
 
 func BaseEnv(outer *eval.Env) *eval.Env {
@@ -83,6 +85,51 @@ func oneArg(exp ast.Expr, env *eval.Env) (ast.Any, error) {
 		return ast.Null{}, err
 	}
 	return val, nil
+}
+
+func _func(exp ast.Expr, env *eval.Env) (ast.Any, error) {
+	if err := exactLen(exp, 3); err != nil {
+		return ast.Null{}, err
+	}
+	switch exp[1].(type) {
+	default:
+		return ast.Null{}, fmt.Errorf("called with non-array %#v", exp[1])
+	case ast.Array:
+		break
+	}
+	binds := exp[1].(ast.Array)
+	symbols := make([]ast.Symbol, len(binds))
+	for i, item := range binds {
+		switch sym := item.(type) {
+		default:
+			return ast.Null{}, fmt.Errorf("bind expression contained non-symbol %#v", item)
+		case ast.Symbol:
+			symbols[i] = sym
+			break
+		}
+	}
+	body := exp[2]
+	fn := func(args ast.Expr, outer *eval.Env) (ast.Any, error) {
+		err := exactLen(args, len(symbols)+1)
+		if err != nil {
+			return ast.Null{}, err
+		}
+		local := eval.NewEnv(env)
+		for i, sym := range symbols {
+			// bind sym to arg in local, but lazy eval arg in outer
+			local.Set(sym, eval.FutureEval(args[i+1], outer))
+		}
+		// future that places breaks in error trace
+		future := func() (val ast.Any, err error) {
+			val, err = eval.Eval(body, local)
+			if err != nil {
+				err = fmt.Errorf("error\n  %v", err)
+			}
+			return
+		}
+		return eval.Future(future), nil
+	}
+	return eval.Func{Fn: fn, Name: "<func>"}, nil
 }
 
 func _defE(exp ast.Expr, env *eval.Env) (ast.Any, error) {

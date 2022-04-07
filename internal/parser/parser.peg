@@ -70,8 +70,15 @@ SExpr ←  '(' expr:Expr ')' {
 // postfix and infix expressions
 Expr ←  _* first:Any rest:(_+ Any)+ _* {
   return ast.Expr(join(first, rest, 1)), nil
-} / _* infix:AsExpr _* {
+} / _* infix:FnExpr _* {
   return ast.Expr(infix.([]ast.Any)), nil
+}
+// func
+FnOp ←  "=>" {
+  return symbol(c)
+}
+FnExpr ←  left:AsExpr right:(_* FnOp _* AsExpr)? {
+  return swap(left, []interface{}{right}, 1, 3), nil
 }
 // or
 AsOp ←  ":=" {
