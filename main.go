@@ -21,8 +21,26 @@ THE SOFTWARE.
 */
 package main
 
-import "github.com/arizonahanson/oryx/cmd"
+import (
+	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"github.com/arizonahanson/oryx/cmd"
+)
 
 func main() {
 	cmd.Execute()
+}
+
+// trap OS termination signals
+func trap() {
+	traps := make(chan os.Signal, 1)
+	signal.Notify(traps, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		sig := <-traps
+		fmt.Fprintln(os.Stderr, "signal:", sig)
+		cmd.Quit()
+	}()
 }
