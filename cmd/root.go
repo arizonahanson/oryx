@@ -26,7 +26,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/arizonahanson/oryx/pkg/eval"
 	"github.com/arizonahanson/oryx/pkg/lib"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -45,8 +44,7 @@ var rootCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	Version: version,
 	Run: func(cmd *cobra.Command, args []string) {
-		env := lib.BaseEnv(nil)
-		val, err := eval.EvalBytes([]byte(strings.Join(args, " ")), env)
+		val, err := lib.DoString(strings.Join(args, " "), nil)
 		cobra.CheckErr(err)
 		fmt.Println(val)
 	},
