@@ -133,14 +133,16 @@ UnOp ←  "!" {
   return symbol(c)
 }
 UnExpr ←  op:UnOp? _* any:Any? {
-  res := []ast.Any{}
   if op != nil {
-    res = append(res, op.(ast.Symbol))
+    if any != nil {
+      return []ast.Any{op.(ast.Symbol), any.(ast.Any)}, nil
+    }
+    return []ast.Any{op.(ast.Symbol)}, nil
   }
   if any != nil {
-    res = append(res, any.(ast.Any))
+    return []ast.Any{any.(ast.Any)}, nil
   }
-	return res, nil
+  return []ast.Any{}, nil
 }
 
 // symbol component
