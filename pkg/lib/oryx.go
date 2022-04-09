@@ -13,6 +13,19 @@ func DoString(in string, env *eval.Env) (ast.Any, error) {
 	if err != nil {
 		return ast.Null{}, err
 	}
+	return last(val)
+}
+
+func DoFile(filename string, env *eval.Env) (ast.Any, error) {
+	baseEnv := BaseEnv(env)
+	val, err := eval.EvalFile(filename, baseEnv)
+	if err != nil {
+		return ast.Null{}, err
+	}
+	return last(val)
+}
+
+func last(val ast.Any) (ast.Any, error) {
 	switch seq := val.(type) {
 	default:
 		return val, nil

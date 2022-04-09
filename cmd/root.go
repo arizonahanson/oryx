@@ -44,7 +44,7 @@ var rootCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	Version: version,
 	Run: func(cmd *cobra.Command, args []string) {
-		val, err := lib.DoString(strings.Join(args, " "), nil)
+		val, err := lib.DoFile(args[0], nil)
 		cobra.CheckErr(err)
 		fmt.Println(val)
 	},
