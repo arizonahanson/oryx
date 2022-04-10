@@ -44,13 +44,23 @@ runeEsc ←  `\` (["\\/abfnrtv] /
 hexDigit ← [0-9a-f]i
 
 // array
-Array ←  '[' list:List? ']' {
+Array ←  '[' list:Mat? ']' {
   if list == nil {
     return ast.Array{}, nil
   }
   return list, nil
-} / '[' List? !']' {
+} / '[' Mat? !']' {
   return ast.Null{}, errors.New("not terminated")
+}
+Mat ←  first:List? rest:(';' List?)* {
+  mat := join(first, rest, 1)
+  if len(slice(rest)) == 0 {
+    if first == nil {
+      return ast.Array{}, nil
+    }
+    return first, nil
+  }
+  return ast.Array(mat), nil
 }
 // list of one or more Any
 List ←  list:(Seq / Unary) {
